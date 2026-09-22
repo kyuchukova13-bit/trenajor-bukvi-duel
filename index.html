@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <title>Тренажор по писане - Калибриране</title>
+    <style>
+        @font-face {
+            font-family: 'BoyanMaga';
+            src: url('Boyan_Maga-Regular.ttf') format('truetype');
+        }
+        :root { --dark: #2c3e50; --blue: #3498db; --green: #2ecc71; --red: #e74c3c; --orange: #e67e22; }
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
+
+        /* НЕВИДИМ ТЕКСТ ЗА ПРЕДВАРИТЕЛНО ЗАРЕЖДАНЕ НА ШРИФТА */
+        .font-loader { font-family: 'BoyanMaga'; position: absolute; opacity: 0; pointer-events: none; }
+
+        /* НАЧАЛЕН ЕКРАН */
+        #start-screen { position: fixed; inset: 0; background: var(--dark); display: flex; align-items: center; justify-content: center; z-index: 3000; }
+        .welcome-box { background: white; width: 90%; max-width: 800px; padding: 40px; border-radius: 25px; text-align: center; }
+        .big-btn { padding: 20px 45px; font-size: 1.6rem; border: none; border-radius: 12px; cursor: pointer; color: white; font-weight: bold; margin: 10px; }
+
+        /* ФИНАЛЕН ЕКРАН */
+        #final-screen { position: fixed; inset: 0; background: var(--dark); display: none; align-items: center; justify-content: center; z-index: 3000; color: white; text-align: center; }
+
+        /* МЕЖДИНЕН ЕКРАН */
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; }
+        .preview-wrap { display: flex; gap: 20px; width: 90%; height: 60%; }
+        .result-card { flex: 1; background: white; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column; }
+        .preview-img { flex: 1; object-fit: contain; width: 100%; }
+        .res-percent { height: 60px; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white; font-weight: bold; }
+
+        /* РАБОТНО ПОЛЕ */
+        .app-layout { display: none; flex-direction: column; height: 100vh; }
+        
+        #status-banner { 
+            position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
+            width: 60%; z-index: 1000; padding: 15px; border-radius: 15px;
+            color: white; text-align: center; font-weight: bold; font-size: 1.2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3); display: none;
+        }
+
+        .levels-bar { height: 80px; background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .dots-row { display: flex; gap: 10px; margin-bottom: 5px; }
+        .dot { width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; display: flex; overflow: hidden; background: #7f8c8d; }
+        .dot-half { flex: 1; height: 100%; }
+
+        .workspace { display: flex; flex: 1; gap: 15px; padding: 15px; background: #dfe6e9; overflow: hidden; }
+        .canvas-container { flex: 1; background: white; border-radius: 20px; position: relative; border: 2px solid #ccc; }
+        canvas { width: 100%; height: 100%; display: block; touch-action: none; border-radius: 20px; }
+        
+        .footer { height: 90px; background: var(--dark); display: flex; align-items: center; justify-content: center; gap: 20px; }
+        .footer-btn { padding: 15px 30px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="font-loader">Зареждане на ръкописен шрифт...</div>
+
+<div id="status-banner"></div>
+
+<div id="start-screen">
+    <div class="welcome-box">
+        <h1>ТРЕНАЖОР ПО ПИСАНЕ</h1>
+        <button class="big-btn" style="background: var(--orange);" onclick="startGame('гласни')">ГЛАСНИ</button>
+        <button class="big-btn" style="background: var(--blue);" onclick="startGame('съгласни')">СЪГЛАСНИ</button>
+    </div>
+</div>
+
+<div id="review-screen" class="overlay">
+    <div class="preview-wrap">
+        <div class="result-card" id="card0"><img id="res0" class="preview-img"><div id="p0" class="res-percent"></div></div>
+        <div class="result-card" id="card1"><img id="res1" class="preview-img"><div id="p1" class="res-percent"></div></div>
+    </div>
+    <button id="next-btn" class="big-btn" style="background: var(--blue);" onclick="processNext()">СЛЕДВАЩА БУКВА</button>
+</div>
+
+<div id="final-screen">
+    <div>
+        <h1 id="winner-msg">БРАВО!</h1>
+        <div style="font-size: 2rem;">Ученик 1: <span id="f-score0"></span></div>
+        <div style="font-size: 2rem;">Ученик 2: <span id="f-score1"></span></div>
+        <button class='big-btn' style="background: var(--blue); margin-top: 20px;" onclick='location.reload()'>ИГРАЙ ОТНОВО</button>
+    </div>
+</div>
+
+<div id="app" class="app-layout">
+    <div class="levels-bar">
+        <div class="dots-row" id="nav-dots"></div>
+        <div id="level-text">БУКВА 1 ОТ 6</div>
+    </div>
+    <div class="workspace">
+        <div class="canvas-container"><canvas id="c0"></canvas></div>
+        <div class="canvas-container"><canvas id="c1"></canvas></div>
+    </div>
+    <div class="footer">
+        <button class="footer-btn" style="background: var(--green);" onclick="check()">ПРОВЕРИ</button>
+        <button class="footer-btn" style="background: var(--dark); border: 1px solid white;" onclick="drawScene()">ИЗЧИСТИ</button>
+    </div>
+</div>
+
+<canvas id="hidden-canvas" style="display:none;"></canvas>
+
+<script>
+    // === ТУК ВЪВЕЖДАШ КООРДИНАТИТЕ ОТ ТАЙНИЯ ИНСТРУМЕНТ ===
+    const letterConfig = {
+        'А': { capX: -40, capY: -5,   lowX: 15, lowY: -75 },
+        'О': { capX: 20, capY: -140, lowX: 15, lowY: -75 },
+        // Продължи с останалите...
+    };
+
+    const data = {
+        'гласни': ['А', 'Ъ', 'О', 'У', 'Е', 'И'],
+        'съгласни': ['Б', 'В', 'Г', 'Д', 'Ж', 'З', 'К', 'Л', 'М', 'Н', 'П', 'Р', 'С', 'Т']
+    };
+    let state = { letters: [], curIdx: 0, step: 1, mode: 'write', fixesLeft: 2 };
+    let sessionScores = [[0,0,0,0,0,0], [0,0,0,0,0,0]];
+    let drawing = [false, false];
+    let hasDrawn = [false, false]; 
+    
+    const cans = [document.getElementById('c0'), document.getElementById('c1')];
+    const ctxs = cans.map(c => c.getContext('2d', {willReadFrequently: true}));
+    const hCan = document.getElementById('hidden-canvas');
+    const hCtx = hCan.getContext('2d', {willReadFrequently: true});
+
+    function startGame(cat) {
+        state.letters = data[cat].sort(() => 0.5 - Math.random()).slice(0, 6);
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+        buildDots();
+        drawScene(); // Вече шрифтът е зареден от невидимия div
+    }
+
+    function buildDots() {
+        const container = document.getElementById('nav-dots');
+        container.innerHTML = '';
+        for(let i=0; i<6; i++) {
+            const d = document.createElement('div');
+            d.className = 'dot';
+            d.id = `dot-${i}`;
+            d.innerHTML = `<div class="dot-half" id="dot-${i}-0"></div><div class="dot-half" id="dot-${i}-1"></div>`;
+            
+            d.onclick = () => {
+                if (state.mode === 'fix' && state.fixesLeft > 0) {
+                    state.curIdx = i;
+                    document.getElementById('status-banner').innerText = `ПОПРАВЯШ БУКВА ${i+1}. След изписване натисни ПРОВЕРИ.`;
+                    drawScene();
+                }
+            };
+            container.appendChild(d);
+        }
+    }
+
+    function drawScene() {
+        hasDrawn = [false, false];
+        if (state.mode === 'write') document.getElementById('level-text').innerText = `БУКВА ${state.curIdx + 1} ОТ 6`;
+        else document.getElementById('level-text').innerText = `ПОПРАВКА НА БУКВА ${state.curIdx + 1}`;
+
+        cans.forEach((c, i) => {
+            c.width = c.parentElement.clientWidth;
+            c.height = c.parentElement.clientHeight;
+            const ctx = ctxs[i];
+            const mid = c.height / 2;
+            const rowH = 90;
+            const baseLine = mid + rowH/2;
+
+            ctx.clearRect(0, 0, c.width, c.height);
+
+            // Линиатура
+            ctx.strokeStyle = "#74b9ff"; ctx.lineWidth = 2.5;
+            [mid - rowH*1.5, mid - rowH/2, mid + rowH/2, mid + rowH*1.5].forEach(y => {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(c.width, y); ctx.stroke();
+            });
+
+            const L = state.letters[state.curIdx];
+            ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+            
+            ctx.font = (rowH * 2.0) + "px 'BoyanMaga'";
+            ctx.fillStyle = "#f8f9fa";
+            ctx.fillText(L, c.width/2 - rowH, baseLine - 3);
+            ctx.strokeStyle = "#b2bec3"; ctx.lineWidth = 2; ctx.setLineDash([8, 5]);
+            ctx.strokeText(L, c.width/2 - rowH, baseLine - 3);
+
+            ctx.font = (rowH * 1.5) + "px 'BoyanMaga'";
+            ctx.fillText(L.toLowerCase(), c.width/2 + rowH, baseLine - 3);
+            ctx.strokeText(L.toLowerCase(), c.width/2 + rowH, baseLine - 3);
+            ctx.setLineDash([]);
+
+            if(letterConfig[L]) {
+                const conf = letterConfig[L];
+                ctx.fillStyle = "rgba(230, 126, 34, 0.9)";
+
+                const capX = (c.width/2 - rowH) + conf.capX;
+                const capY = baseLine + conf.capY;
+                ctx.beginPath(); ctx.arc(capX, capY, 10, 0, Math.PI*2); ctx.fill();
+
+                const lowX = (c.width/2 + rowH) + conf.lowX;
+                const lowY = baseLine + conf.lowY;
+                ctx.beginPath(); ctx.arc(lowX, lowY, 10, 0, Math.PI*2); ctx.fill();
+            }
+        });
+        drawHiddenTarget();
+    }
+
+    function drawHiddenTarget() {
+        hCan.width = cans[0].width; hCan.height = cans[0].height;
+        const mid = hCan.height / 2; const rowH = 90; const baseLine = mid + rowH/2;
+        const L = state.letters[state.curIdx];
+
+        hCtx.clearRect(0, 0, hCan.width, hCan.height);
+        hCtx.textAlign = "center"; hCtx.textBaseline = "alphabetic";
+        hCtx.lineJoin = "round"; hCtx.lineCap = "round";
+        
+        hCtx.lineWidth = 25; hCtx.strokeStyle = "#000000"; 
+        hCtx.font = (rowH * 2.0) + "px 'BoyanMaga'";
+        hCtx.strokeText(L, hCan.width/2 - rowH, baseLine - 3);
+        hCtx.font = (rowH * 1.5) + "px 'BoyanMaga'";
+        hCtx.strokeText(L.toLowerCase(), hCan.width/2 + rowH, baseLine - 3);
+    }
+
+    function getRealScore(idx) {
+        if(!hasDrawn[idx]) return 0;
+        const uData = ctxs[idx].getImageData(0, 0, cans[idx].width, cans[idx].height).data;
+        const tData = hCtx.getImageData(0, 0, hCan.width, hCan.height).data;
+        let targetPx = 0, hits = 0, misses = 0;
+
+        for (let i = 0; i < uData.length; i += 4) {
+            const isUser = uData[i+3] > 50 && uData[i] < 100 && uData[i+1] < 100;
+            const isTarget = tData[i+3] > 100;
+            if (isTarget) targetPx++;
+            if (isUser) { if (isTarget) hits++; else misses++; }
+        }
+
+        if (targetPx === 0) return 0;
+        let maxExpected = targetPx * 0.35; 
+        let coverage = (hits / maxExpected) * 100;
+        let penalty = (misses / maxExpected) * 150; 
+        
+        let final = Math.round(coverage - penalty);
+        if (final > 99) final = 99;
+        if (final < 0) final = 0;
+        return final;
+    }
+
+    function showBanner(text, isError) {
+        const b = document.getElementById('status-banner');
+        b.innerText = text;
+        b.style.background = isError ? "var(--red)" : "var(--green)";
+        b.style.display = "block";
+        setTimeout(() => { if(state.mode !== 'fix') b.style.display = "none"; }, 2500);
+    }
+
+    function check() {
+        if (state.mode === 'fix' && !hasDrawn[0] && !hasDrawn[1]) {
+            alert("Първо изберете кръгче за поправка и напишете буквата!"); return;
+        }
+
+        const s0 = getRealScore(0); const s1 = getRealScore(1);
+        sessionScores[0][state.curIdx] = s0; sessionScores[1][state.curIdx] = s1;
+
+        document.getElementById('res0').src = cans[0].toDataURL();
+        document.getElementById('res1').src = cans[1].toDataURL();
+        
+        applyResultStyle(0, s0); applyResultStyle(1, s1);
+        updateTopDot(state.curIdx, 0, s0); updateTopDot(state.curIdx, 1, s1);
+
+        const btn = document.getElementById('next-btn'); // ВЕЧЕ НЯМА ДА БЛОКИРА
+        if (state.mode === 'write' && state.step === 6) {
+            btn.innerText = "КЪМ ПОПРАВКИТЕ"; btn.style.background = "var(--orange)";
+        } else if (state.mode === 'fix') {
+            btn.innerText = "ПРИЕМИ ПОПРАВКАТА"; btn.style.background = "var(--green)";
+        } else {
+            btn.innerText = "СЛЕДВАЩА БУКВА"; btn.style.background = "var(--blue)";
+        }
+
+        document.getElementById('review-screen').style.display = 'flex';
+    }
+
+    function applyResultStyle(player, score) {
+        const el = document.getElementById(`p${player}`);
+        const card = document.getElementById(`card${player}`);
+        el.innerText = score + "%";
+        let color = "var(--red)";
+        if (score >= 85) color = "var(--green)"; else if (score >= 60) color = "var(--orange)";
+        el.style.background = color; card.style.borderColor = color;
+    }
+
+    function updateTopDot(idx, player, score) {
+        const side = document.getElementById(`dot-${idx}-${player}`);
+        let color = "var(--red)";
+        if (score >= 85) color = "var(--green)"; else if (score >= 60) color = "var(--orange)";
+        side.style.background = color;
+    }
+
+    function processNext() {
+        document.getElementById('review-screen').style.display = 'none';
+        
+        if (state.mode === 'write') {
+            if (state.step < 6) {
+                state.step++; state.curIdx++; drawScene();
+            } else {
+                state.mode = 'fix';
+                showBanner("МИСИЯТА ЗАВЪРШИ! Кликнете горе върху кръгче, за да поправите буква.", false);
+                for(let i=0; i<6; i++) {
+                    document.getElementById(`dot-${i}`).style.cursor = 'pointer';
+                    document.getElementById(`dot-${i}`).style.transform = 'scale(1.2)';
+                    document.getElementById(`dot-${i}`).style.border = '3px solid gold';
+                }
+                cans.forEach(c => c.getContext('2d').clearRect(0, 0, c.width, c.height));
+                document.getElementById('level-text').innerText = "ИЗБЕРИ БУКВА ЗА ПОПРАВКА";
+            }
+        } else if (state.mode === 'fix') {
+            state.fixesLeft--;
+            if (state.fixesLeft > 0) {
+                showBanner("Чудесно! Избери още една последна буква за поправка.", false);
+                cans.forEach(c => c.getContext('2d').clearRect(0, 0, c.width, c.height));
+                document.getElementById('level-text').innerText = "ИЗБЕРИ БУКВА ЗА ПОПРАВКА";
+            } else {
+                showFinalScreen();
+            }
+        }
+    }
+
+    function showFinalScreen() {
+        document.getElementById('app').style.display = 'none';
+        let avg0 = Math.round(sessionScores[0].reduce((a,b)=>a+b, 0) / 6);
+        let avg1 = Math.round(sessionScores[1].reduce((a,b)=>a+b, 0) / 6);
+
+        document.getElementById('f-score0').innerText = avg0 + "%";
+        document.getElementById('f-score1').innerText = avg1 + "%";
+
+        let msg = document.getElementById('winner-msg');
+        if(avg0 > avg1) msg.innerText = "🏆 Победител е Ученик 1!";
+        else if(avg1 > avg0) msg.innerText = "🏆 Победител е Ученик 2!";
+        else msg.innerText = "🤝 РАВЕНСТВО! И двамата сте страхотни!";
+
+        document.getElementById('final-screen').style.display = 'flex';
+    }
+
+    cans.forEach((c, i) => {
+        const getPos = (e) => {
+            const r = c.getBoundingClientRect();
+            return { x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top };
+        };
+        const start = (e) => {
+            const p = getPos(e);
+            const rowH = 90;
+            const baseLine = (c.height / 2) + rowH/2;
+
+            // === ТАЕН ИНСТРУМЕНТ (ЗАДРЪЖ SHIFT И КЛИКНИ) ===
+            if (e.shiftKey) {
+                let isCap = p.x < c.width/2;
+                let baseX = isCap ? (c.width/2 - rowH) : (c.width/2 + rowH);
+                let exactX = Math.round(p.x - baseX);
+                let exactY = Math.round(p.y - baseLine);
+                let typeText = isCap ? "ГЛАВНА БУКВА (capX, capY)" : "МАЛКА БУКВА (lowX, lowY)";
+                alert(`🎯 ${typeText}\nВъведи тези стойности в letterConfig:\nX: ${exactX}\nY: ${exactY}`);
+                return;
+            }
+
+            if(state.mode === 'fix' && !document.getElementById('status-banner').innerText.includes("ПОПРАВЯШ")) return;
+            
+            const L = state.letters[state.curIdx];
+            let validStart = true;
+
+            if(letterConfig[L]) {
+                const conf = letterConfig[L];
+                const capTx = (c.width/2 - rowH) + conf.capX;
+                const capTy = baseLine + conf.capY;
+                const distCap = Math.hypot(p.x - capTx, p.y - capTy);
+
+                const lowTx = (c.width/2 + rowH) + conf.lowX;
+                const lowTy = baseLine + conf.lowY;
+                const distLow = Math.hypot(p.x - lowTx, p.y - lowTy);
+
+                if(distCap > 45 && distLow > 45) {
+                    validStart = false;
+                }
+            }
+
+            if (!validStart) {
+                showBanner("ЗАПОЧНИ ОТ ОРАНЖЕВАТА ТОЧКА!", true);
+                return; 
+            }
+
+            drawing[i] = true; hasDrawn[i] = true; 
+            ctxs[i].beginPath(); ctxs[i].moveTo(p.x, p.y);
+        };
+        const move = (e) => {
+            if(!drawing[i]) return;
+            const p = getPos(e);
+            ctxs[i].lineTo(p.x, p.y); 
+            ctxs[i].strokeStyle = "#2c3e50"; ctxs[i].lineWidth = 8; ctxs[i].lineCap = "round"; ctxs[i].stroke();
+        };
+        c.addEventListener('mousedown', start); c.addEventListener('mousemove', move);
+        c.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); }, {passive:false});
+        c.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); }, {passive:false});
+    });
+
+    window.onmouseup = () => drawing.fill(false);
+    window.ontouchend = () => drawing.fill(false);
+    window.onresize = drawScene;
+</script>
+</body>
+</html>
