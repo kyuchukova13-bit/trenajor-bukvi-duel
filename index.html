@@ -2,404 +2,105 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <title>Тренажор по писане - Калибриране</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Тренажор по ръкопис - Индивидуален</title>
     <style>
         @font-face {
             font-family: 'BoyanMaga';
             src: url('Boyan_Maga-Regular.ttf') format('truetype');
         }
-        :root { --dark: #2c3e50; --blue: #3498db; --green: #2ecc71; --red: #e74c3c; --orange: #e67e22; }
-        * { box-sizing: border-box; }
-        body, html { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
+        :root { --dark: #2c3e50; --blue: #3498db; --green: #2ecc71; --red: #e74c3c; --orange: #e67e22; --bg: #f0f4f8; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; height: 100vh; font-family: 'Segoe UI', sans-serif; background: var(--bg); overflow: hidden; touch-action: none; }
 
-        /* НЕВИДИМ ТЕКСТ ЗА ПРЕДВАРИТЕЛНО ЗАРЕЖДАНЕ НА ШРИФТА */
-        .font-loader { font-family: 'BoyanMaga'; position: absolute; opacity: 0; pointer-events: none; }
-
-        /* НАЧАЛЕН ЕКРАН */
-        #start-screen { position: fixed; inset: 0; background: var(--dark); display: flex; align-items: center; justify-content: center; z-index: 3000; }
-        .welcome-box { background: white; width: 90%; max-width: 800px; padding: 40px; border-radius: 25px; text-align: center; }
-        .big-btn { padding: 20px 45px; font-size: 1.6rem; border: none; border-radius: 12px; cursor: pointer; color: white; font-weight: bold; margin: 10px; }
-
-        /* ФИНАЛЕН ЕКРАН */
-        #final-screen { position: fixed; inset: 0; background: var(--dark); display: none; align-items: center; justify-content: center; z-index: 3000; color: white; text-align: center; }
-
-        /* МЕЖДИНЕН ЕКРАН */
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; }
-        .preview-wrap { display: flex; gap: 20px; width: 90%; height: 60%; }
-        .result-card { flex: 1; background: white; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column; }
-        .preview-img { flex: 1; object-fit: contain; width: 100%; }
-        .res-percent { height: 60px; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white; font-weight: bold; }
-
-        /* РАБОТНО ПОЛЕ */
-        .app-layout { display: none; flex-direction: column; height: 100vh; }
-        
-        #status-banner { 
-            position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
-            width: 60%; z-index: 1000; padding: 15px; border-radius: 15px;
-            color: white; text-align: center; font-weight: bold; font-size: 1.2rem;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3); display: none;
+        #start-screen { 
+            position: fixed; inset: 0; background: #112233;
+            display: flex; flex-direction: row; align-items: center; justify-content: center; 
+            z-index: 3000; overflow-y: auto; padding: 40px; gap: 50px; 
         }
-
-        .levels-bar { height: 80px; background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .dots-row { display: flex; gap: 10px; margin-bottom: 5px; }
-        .dot { width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; display: flex; overflow: hidden; background: #7f8c8d; }
-        .dot-half { flex: 1; height: 100%; }
-
-        .workspace { display: flex; flex: 1; gap: 15px; padding: 15px; background: #dfe6e9; overflow: hidden; }
-        .canvas-container { flex: 1; background: white; border-radius: 20px; position: relative; border: 2px solid #ccc; }
-        canvas { width: 100%; height: 100%; display: block; touch-action: none; border-radius: 20px; }
+        .left-panel { flex: 0 0 380px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .main-title { color: white; font-size: 2.2rem; margin: 0 0 10px 0; border-bottom: 3px solid var(--blue); padding-bottom: 10px; }
+        .logo-wrap img { max-width: 250px; border-radius: 15px; background: white; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .brand-text { color: white; font-size: 1.2rem; font-weight: bold; margin: 0; text-transform: uppercase; }
         
-        .footer { height: 90px; background: var(--dark); display: flex; align-items: center; justify-content: center; gap: 20px; }
-        .footer-btn { padding: 15px 30px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; color: white; }
+        .right-panel { flex: 1; max-width: 800px; }
+        .alphabet-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(65px, 1fr)); gap: 12px; width: 100%; }
+        .letter-card { 
+            background: #2c3e50; border: 2px solid #556677; border-radius: 15px; height: 75px; 
+            display: flex; align-items: center; justify-content: center; font-family: 'BoyanMaga'; 
+            font-size: 2rem; color: #ecf0f1; cursor: pointer; transition: 0.1s;
+        }
+        .letter-card:hover { background: #34495e; border-color: var(--blue); transform: scale(0.95); }
+
+        #app-screen { display: none; flex-direction: column; height: 100vh; background: var(--bg); }
+        .top-bar { height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 2px solid #ddd; z-index: 10; }
+        .back-btn { background: #eee; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .current-letter-display { font-family: 'BoyanMaga'; font-size: 2rem; color: var(--blue); }
+        
+        .workspace { flex: 1; display: flex; flex-direction: column; padding: 15px; position: relative; }
+        .canvas-container { flex: 1; background: white; border-radius: 20px; border: 2px solid #ccc; position: relative; overflow: hidden; }
+        canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+
+        .bottom-bar { height: 80px; background: white; display: flex; align-items: center; justify-content: center; gap: 15px; padding: 0 15px; border-top: 2px solid #ddd; }
+        .action-btn { flex: 1; max-width: 250px; height: 55px; border-radius: 15px; border: none; font-weight: bold; font-size: 1.2rem; cursor: pointer; color: white; text-transform: uppercase; }
+        .btn-check { background: var(--green); }
+        .btn-clear { background: var(--red); }
+
+        #result-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; padding: 20px; text-align: center; }
+        .score-circle { width: 150px; height: 150px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white; margin-bottom: 20px; }
+        #hidden-canvas { display: none; }
     </style>
 </head>
 <body>
 
-<div class="font-loader">Зареждане на ръкописен шрифт...</div>
-
-<div id="status-banner"></div>
-
 <div id="start-screen">
-    <div class="welcome-box">
-        <h1>ТРЕНАЖОР ПО ПИСАНЕ</h1>
-        <button class="big-btn" style="background: var(--orange);" onclick="startGame('гласни')">ГЛАСНИ</button>
-        <button class="big-btn" style="background: var(--blue);" onclick="startGame('съгласни')">СЪГЛАСНИ</button>
+    <div class="left-panel">
+        <h1 class="main-title">Тренажор по ръкопис</h1>
+        <div class="logo-wrap"><img src="logo.png"></div>
+        <p class="brand-text">Образователни решения</p>
+        
+        <div style="margin-top: 40px; color: white; width: 100%; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 20px;">
+            <p style="margin: 0 0 10px 0; font-size: 0.9rem;">СТРОГОСТ НА ОЦЕНЯВАНЕ:</p>
+            <input type="range" id="strictness" min="1" max="10" value="5" style="width: 100%;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #bdc3c7; margin-top: 5px;">
+                <span>ПО-ЛЕКО</span>
+                <span>КРИТИЧНО</span>
+            </div>
+        </div>
+    </div>
+    <div class="right-panel">
+        <div class="alphabet-grid" id="alphabet-grid"></div>
     </div>
 </div>
 
-<div id="review-screen" class="overlay">
-    <div class="preview-wrap">
-        <div class="result-card" id="card0"><img id="res0" class="preview-img"><div id="p0" class="res-percent"></div></div>
-        <div class="result-card" id="card1"><img id="res1" class="preview-img"><div id="p1" class="res-percent"></div></div>
-    </div>
-    <button id="next-btn" class="big-btn" style="background: var(--blue);" onclick="processNext()">СЛЕДВАЩА БУКВА</button>
-</div>
-
-<div id="final-screen">
-    <div>
-        <h1 id="winner-msg">БРАВО!</h1>
-        <div style="font-size: 2rem;">Ученик 1: <span id="f-score0"></span></div>
-        <div style="font-size: 2rem;">Ученик 2: <span id="f-score1"></span></div>
-        <button class='big-btn' style="background: var(--blue); margin-top: 20px;" onclick='location.reload()'>ИГРАЙ ОТНОВО</button>
-    </div>
-</div>
-
-<div id="app" class="app-layout">
-    <div class="levels-bar">
-        <div class="dots-row" id="nav-dots"></div>
-        <div id="level-text">БУКВА 1 ОТ 6</div>
+<div id="app-screen">
+    <div class="top-bar">
+        <button class="back-btn" onclick="showAlphabet()">⬅ АЗБУКА</button>
+        <div class="current-letter-display" id="top-letter">Аа</div>
+        <div style="width: 80px;"></div>
     </div>
     <div class="workspace">
-        <div class="canvas-container"><canvas id="c0"></canvas></div>
-        <div class="canvas-container"><canvas id="c1"></canvas></div>
+        <div class="canvas-container"><canvas id="main-canvas"></canvas></div>
     </div>
-    <div class="footer">
-        <button class="footer-btn" style="background: var(--green);" onclick="check()">ПРОВЕРИ</button>
-        <button class="footer-btn" style="background: var(--dark); border: 1px solid white;" onclick="drawScene()">ИЗЧИСТИ</button>
+    <div class="bottom-bar">
+        <button class="action-btn btn-clear" onclick="drawScene()">ИЗЧИСТИ</button>
+        <button class="action-btn btn-check" onclick="checkScore()">ПРОВЕРИ</button>
     </div>
 </div>
 
-<canvas id="hidden-canvas" style="display:none;"></canvas>
+<div id="result-overlay">
+    <div class="score-circle" id="score-display">0%</div>
+    <h2 id="result-msg">Добра работа!</h2>
+    <div style="display: flex; gap: 15px; margin-top: 30px;">
+        <button class="action-btn" style="background: var(--blue); padding: 0 20px;" onclick="retryLetter()">ОПИТАЙ ПАК</button>
+        <button class="action-btn" style="background: var(--orange); padding: 0 20px;" onclick="showAlphabet()">ДРУГА БУКВА</button>
+    </div>
+</div>
+
+<canvas id="hidden-canvas"></canvas>
 
 <script>
-    // === ТУК ВЪВЕЖДАШ КООРДИНАТИТЕ ОТ ТАЙНИЯ ИНСТРУМЕНТ ===
-    const letterConfig = {
-        'А': { capX: -40, capY: -5,   lowX: 15, lowY: -75 },
-        'О': { capX: 20, capY: -140, lowX: 15, lowY: -75 },
-        // Продължи с останалите...
-    };
-
-    const data = {
-        'гласни': ['А', 'Ъ', 'О', 'У', 'Е', 'И'],
-        'съгласни': ['Б', 'В', 'Г', 'Д', 'Ж', 'З', 'К', 'Л', 'М', 'Н', 'П', 'Р', 'С', 'Т']
-    };
-    let state = { letters: [], curIdx: 0, step: 1, mode: 'write', fixesLeft: 2 };
-    let sessionScores = [[0,0,0,0,0,0], [0,0,0,0,0,0]];
-    let drawing = [false, false];
-    let hasDrawn = [false, false]; 
-    
-    const cans = [document.getElementById('c0'), document.getElementById('c1')];
-    const ctxs = cans.map(c => c.getContext('2d', {willReadFrequently: true}));
-    const hCan = document.getElementById('hidden-canvas');
-    const hCtx = hCan.getContext('2d', {willReadFrequently: true});
-
-    function startGame(cat) {
-        state.letters = data[cat].sort(() => 0.5 - Math.random()).slice(0, 6);
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('app').style.display = 'flex';
-        buildDots();
-        drawScene(); // Вече шрифтът е зареден от невидимия div
-    }
-
-    function buildDots() {
-        const container = document.getElementById('nav-dots');
-        container.innerHTML = '';
-        for(let i=0; i<6; i++) {
-            const d = document.createElement('div');
-            d.className = 'dot';
-            d.id = `dot-${i}`;
-            d.innerHTML = `<div class="dot-half" id="dot-${i}-0"></div><div class="dot-half" id="dot-${i}-1"></div>`;
-            
-            d.onclick = () => {
-                if (state.mode === 'fix' && state.fixesLeft > 0) {
-                    state.curIdx = i;
-                    document.getElementById('status-banner').innerText = `ПОПРАВЯШ БУКВА ${i+1}. След изписване натисни ПРОВЕРИ.`;
-                    drawScene();
-                }
-            };
-            container.appendChild(d);
-        }
-    }
-
-    function drawScene() {
-        hasDrawn = [false, false];
-        if (state.mode === 'write') document.getElementById('level-text').innerText = `БУКВА ${state.curIdx + 1} ОТ 6`;
-        else document.getElementById('level-text').innerText = `ПОПРАВКА НА БУКВА ${state.curIdx + 1}`;
-
-        cans.forEach((c, i) => {
-            c.width = c.parentElement.clientWidth;
-            c.height = c.parentElement.clientHeight;
-            const ctx = ctxs[i];
-            const mid = c.height / 2;
-            const rowH = 90;
-            const baseLine = mid + rowH/2;
-
-            ctx.clearRect(0, 0, c.width, c.height);
-
-            // Линиатура
-            ctx.strokeStyle = "#74b9ff"; ctx.lineWidth = 2.5;
-            [mid - rowH*1.5, mid - rowH/2, mid + rowH/2, mid + rowH*1.5].forEach(y => {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(c.width, y); ctx.stroke();
-            });
-
-            const L = state.letters[state.curIdx];
-            ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-            
-            ctx.font = (rowH * 2.0) + "px 'BoyanMaga'";
-            ctx.fillStyle = "#f8f9fa";
-            ctx.fillText(L, c.width/2 - rowH, baseLine - 3);
-            ctx.strokeStyle = "#b2bec3"; ctx.lineWidth = 2; ctx.setLineDash([8, 5]);
-            ctx.strokeText(L, c.width/2 - rowH, baseLine - 3);
-
-            ctx.font = (rowH * 1.5) + "px 'BoyanMaga'";
-            ctx.fillText(L.toLowerCase(), c.width/2 + rowH, baseLine - 3);
-            ctx.strokeText(L.toLowerCase(), c.width/2 + rowH, baseLine - 3);
-            ctx.setLineDash([]);
-
-            if(letterConfig[L]) {
-                const conf = letterConfig[L];
-                ctx.fillStyle = "rgba(230, 126, 34, 0.9)";
-
-                const capX = (c.width/2 - rowH) + conf.capX;
-                const capY = baseLine + conf.capY;
-                ctx.beginPath(); ctx.arc(capX, capY, 10, 0, Math.PI*2); ctx.fill();
-
-                const lowX = (c.width/2 + rowH) + conf.lowX;
-                const lowY = baseLine + conf.lowY;
-                ctx.beginPath(); ctx.arc(lowX, lowY, 10, 0, Math.PI*2); ctx.fill();
-            }
-        });
-        drawHiddenTarget();
-    }
-
-    function drawHiddenTarget() {
-        hCan.width = cans[0].width; hCan.height = cans[0].height;
-        const mid = hCan.height / 2; const rowH = 90; const baseLine = mid + rowH/2;
-        const L = state.letters[state.curIdx];
-
-        hCtx.clearRect(0, 0, hCan.width, hCan.height);
-        hCtx.textAlign = "center"; hCtx.textBaseline = "alphabetic";
-        hCtx.lineJoin = "round"; hCtx.lineCap = "round";
-        
-        hCtx.lineWidth = 25; hCtx.strokeStyle = "#000000"; 
-        hCtx.font = (rowH * 2.0) + "px 'BoyanMaga'";
-        hCtx.strokeText(L, hCan.width/2 - rowH, baseLine - 3);
-        hCtx.font = (rowH * 1.5) + "px 'BoyanMaga'";
-        hCtx.strokeText(L.toLowerCase(), hCan.width/2 + rowH, baseLine - 3);
-    }
-
-    function getRealScore(idx) {
-        if(!hasDrawn[idx]) return 0;
-        const uData = ctxs[idx].getImageData(0, 0, cans[idx].width, cans[idx].height).data;
-        const tData = hCtx.getImageData(0, 0, hCan.width, hCan.height).data;
-        let targetPx = 0, hits = 0, misses = 0;
-
-        for (let i = 0; i < uData.length; i += 4) {
-            const isUser = uData[i+3] > 50 && uData[i] < 100 && uData[i+1] < 100;
-            const isTarget = tData[i+3] > 100;
-            if (isTarget) targetPx++;
-            if (isUser) { if (isTarget) hits++; else misses++; }
-        }
-
-        if (targetPx === 0) return 0;
-        let maxExpected = targetPx * 0.35; 
-        let coverage = (hits / maxExpected) * 100;
-        let penalty = (misses / maxExpected) * 150; 
-        
-        let final = Math.round(coverage - penalty);
-        if (final > 99) final = 99;
-        if (final < 0) final = 0;
-        return final;
-    }
-
-    function showBanner(text, isError) {
-        const b = document.getElementById('status-banner');
-        b.innerText = text;
-        b.style.background = isError ? "var(--red)" : "var(--green)";
-        b.style.display = "block";
-        setTimeout(() => { if(state.mode !== 'fix') b.style.display = "none"; }, 2500);
-    }
-
-    function check() {
-        if (state.mode === 'fix' && !hasDrawn[0] && !hasDrawn[1]) {
-            alert("Първо изберете кръгче за поправка и напишете буквата!"); return;
-        }
-
-        const s0 = getRealScore(0); const s1 = getRealScore(1);
-        sessionScores[0][state.curIdx] = s0; sessionScores[1][state.curIdx] = s1;
-
-        document.getElementById('res0').src = cans[0].toDataURL();
-        document.getElementById('res1').src = cans[1].toDataURL();
-        
-        applyResultStyle(0, s0); applyResultStyle(1, s1);
-        updateTopDot(state.curIdx, 0, s0); updateTopDot(state.curIdx, 1, s1);
-
-        const btn = document.getElementById('next-btn'); // ВЕЧЕ НЯМА ДА БЛОКИРА
-        if (state.mode === 'write' && state.step === 6) {
-            btn.innerText = "КЪМ ПОПРАВКИТЕ"; btn.style.background = "var(--orange)";
-        } else if (state.mode === 'fix') {
-            btn.innerText = "ПРИЕМИ ПОПРАВКАТА"; btn.style.background = "var(--green)";
-        } else {
-            btn.innerText = "СЛЕДВАЩА БУКВА"; btn.style.background = "var(--blue)";
-        }
-
-        document.getElementById('review-screen').style.display = 'flex';
-    }
-
-    function applyResultStyle(player, score) {
-        const el = document.getElementById(`p${player}`);
-        const card = document.getElementById(`card${player}`);
-        el.innerText = score + "%";
-        let color = "var(--red)";
-        if (score >= 85) color = "var(--green)"; else if (score >= 60) color = "var(--orange)";
-        el.style.background = color; card.style.borderColor = color;
-    }
-
-    function updateTopDot(idx, player, score) {
-        const side = document.getElementById(`dot-${idx}-${player}`);
-        let color = "var(--red)";
-        if (score >= 85) color = "var(--green)"; else if (score >= 60) color = "var(--orange)";
-        side.style.background = color;
-    }
-
-    function processNext() {
-        document.getElementById('review-screen').style.display = 'none';
-        
-        if (state.mode === 'write') {
-            if (state.step < 6) {
-                state.step++; state.curIdx++; drawScene();
-            } else {
-                state.mode = 'fix';
-                showBanner("МИСИЯТА ЗАВЪРШИ! Кликнете горе върху кръгче, за да поправите буква.", false);
-                for(let i=0; i<6; i++) {
-                    document.getElementById(`dot-${i}`).style.cursor = 'pointer';
-                    document.getElementById(`dot-${i}`).style.transform = 'scale(1.2)';
-                    document.getElementById(`dot-${i}`).style.border = '3px solid gold';
-                }
-                cans.forEach(c => c.getContext('2d').clearRect(0, 0, c.width, c.height));
-                document.getElementById('level-text').innerText = "ИЗБЕРИ БУКВА ЗА ПОПРАВКА";
-            }
-        } else if (state.mode === 'fix') {
-            state.fixesLeft--;
-            if (state.fixesLeft > 0) {
-                showBanner("Чудесно! Избери още една последна буква за поправка.", false);
-                cans.forEach(c => c.getContext('2d').clearRect(0, 0, c.width, c.height));
-                document.getElementById('level-text').innerText = "ИЗБЕРИ БУКВА ЗА ПОПРАВКА";
-            } else {
-                showFinalScreen();
-            }
-        }
-    }
-
-    function showFinalScreen() {
-        document.getElementById('app').style.display = 'none';
-        let avg0 = Math.round(sessionScores[0].reduce((a,b)=>a+b, 0) / 6);
-        let avg1 = Math.round(sessionScores[1].reduce((a,b)=>a+b, 0) / 6);
-
-        document.getElementById('f-score0').innerText = avg0 + "%";
-        document.getElementById('f-score1').innerText = avg1 + "%";
-
-        let msg = document.getElementById('winner-msg');
-        if(avg0 > avg1) msg.innerText = "🏆 Победител е Ученик 1!";
-        else if(avg1 > avg0) msg.innerText = "🏆 Победител е Ученик 2!";
-        else msg.innerText = "🤝 РАВЕНСТВО! И двамата сте страхотни!";
-
-        document.getElementById('final-screen').style.display = 'flex';
-    }
-
-    cans.forEach((c, i) => {
-        const getPos = (e) => {
-            const r = c.getBoundingClientRect();
-            return { x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top };
-        };
-        const start = (e) => {
-            const p = getPos(e);
-            const rowH = 90;
-            const baseLine = (c.height / 2) + rowH/2;
-
-            // === ТАЕН ИНСТРУМЕНТ (ЗАДРЪЖ SHIFT И КЛИКНИ) ===
-            if (e.shiftKey) {
-                let isCap = p.x < c.width/2;
-                let baseX = isCap ? (c.width/2 - rowH) : (c.width/2 + rowH);
-                let exactX = Math.round(p.x - baseX);
-                let exactY = Math.round(p.y - baseLine);
-                let typeText = isCap ? "ГЛАВНА БУКВА (capX, capY)" : "МАЛКА БУКВА (lowX, lowY)";
-                alert(`🎯 ${typeText}\nВъведи тези стойности в letterConfig:\nX: ${exactX}\nY: ${exactY}`);
-                return;
-            }
-
-            if(state.mode === 'fix' && !document.getElementById('status-banner').innerText.includes("ПОПРАВЯШ")) return;
-            
-            const L = state.letters[state.curIdx];
-            let validStart = true;
-
-            if(letterConfig[L]) {
-                const conf = letterConfig[L];
-                const capTx = (c.width/2 - rowH) + conf.capX;
-                const capTy = baseLine + conf.capY;
-                const distCap = Math.hypot(p.x - capTx, p.y - capTy);
-
-                const lowTx = (c.width/2 + rowH) + conf.lowX;
-                const lowTy = baseLine + conf.lowY;
-                const distLow = Math.hypot(p.x - lowTx, p.y - lowTy);
-
-                if(distCap > 45 && distLow > 45) {
-                    validStart = false;
-                }
-            }
-
-            if (!validStart) {
-                showBanner("ЗАПОЧНИ ОТ ОРАНЖЕВАТА ТОЧКА!", true);
-                return; 
-            }
-
-            drawing[i] = true; hasDrawn[i] = true; 
-            ctxs[i].beginPath(); ctxs[i].moveTo(p.x, p.y);
-        };
-        const move = (e) => {
-            if(!drawing[i]) return;
-            const p = getPos(e);
-            ctxs[i].lineTo(p.x, p.y); 
-            ctxs[i].strokeStyle = "#2c3e50"; ctxs[i].lineWidth = 8; ctxs[i].lineCap = "round"; ctxs[i].stroke();
-        };
-        c.addEventListener('mousedown', start); c.addEventListener('mousemove', move);
-        c.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); }, {passive:false});
-        c.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); }, {passive:false});
-    });
-
-    window.onmouseup = () => drawing.fill(false);
-    window.ontouchend = () => drawing.fill(false);
-    window.onresize = drawScene;
+    const _0x2c4436=_0x57d8;(function(_0x292f6a,_0x3e9200){const _0x5111b5=_0x57d8,_0x584217=_0x292f6a();while(!![]){try{const _0x2ca54e=-parseInt(_0x5111b5(0xc4))/0x1*(parseInt(_0x5111b5(0xe2))/0x2)+parseInt(_0x5111b5(0xf4))/0x3+-parseInt(_0x5111b5(0x107))/0x4*(-parseInt(_0x5111b5(0xd1))/0x5)+parseInt(_0x5111b5(0x11e))/0x6*(-parseInt(_0x5111b5(0xe3))/0x7)+-parseInt(_0x5111b5(0x121))/0x8+-parseInt(_0x5111b5(0xdf))/0x9+parseInt(_0x5111b5(0xf0))/0xa;if(_0x2ca54e===_0x3e9200)break;else _0x584217['push'](_0x584217['shift']());}catch(_0x530c20){_0x584217['push'](_0x584217['shift']());}}}(_0x3d8f,0x439c8));const alphabet=_0x2c4436(0x111)['split']('');function _0x3d8f(){const _0xcda4a7=['onclick','strokeText','height','moveTo','688689dDtJWO','var(--red)','releasePointerCapture','148fFCxgr','180502jhtDFs','div','toLowerCase','start-screen','rgba(0,\x200,\x200,\x201)','middle','Добра\x20работа!\x20Опитай\x20пак\x20за\x20пълен\x20успех!\x20💪','Браво!\x20Отлично\x20справяне!\x20✨','display','pointerdown','getImageData','white','font','7240320ypGZpQ','beginPath','alphabet-grid','getElementById','863808XHwqYa','max','none','#f4f6f8','hypot','width','lineTo','main-canvas','top-letter','background','clientWidth','result-overlay','preventDefault','fillStyle','lineWidth','pointerId','px\x20\x27BoyanMaga\x27','stroke','cap','296SLMVgF','var(--orange)','textBaseline','innerText','map','clearRect','length','flex','low','app-screen','АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЬЮЯ','fill','#2c3e50','#a5b1c2','top','setPointerCapture','var(--green)','ЗАПОЧНИ\x20ОТ\x20ТОЧКА\x20','alphabetic','parentElement','forEach','createElement','#74b9ff','96eHyXIQ','fillText','round','2579608bOCVBU','hidden-canvas','min','setLineDash','lineCap','5452MJuAYU','pointerup','className','innerHTML','center','pointercancel','score-display','querySelector','getBoundingClientRect','textAlign','appendChild','data','letter-card','32430rMhzeq','getContext','pointermove','style','addEventListener','lineJoin','left','#2ecc71','orange','strokeStyle'];_0x3d8f=function(){return _0xcda4a7;};return _0x3d8f();}let currentLetter='А',isDrawing=![],hasDrawn=![],currentPointIndex=0x0;const canvas=document[_0x2c4436(0xf3)](_0x2c4436(0xfb)),ctx=canvas[_0x2c4436(0xd2)]('2d',{'willReadFrequently':!![]}),hCan=document['getElementById'](_0x2c4436(0x122)),hCtx=hCan[_0x2c4436(0xd2)]('2d',{'willReadFrequently':!![]}),letterConfig={'А':{'cap':[{'x':-0x5e,'y':-0xb},{'x':-0x24,'y':-0x60}],'low':[{'x':0x6,'y':-0x3e}]},'Б':{'cap':[{'x':0x10,'y':-0x9c},{'x':-0x6,'y':-0x5c},{'x':-0x28,'y':-0x7d}],'low':[{'x':0xb,'y':-0x44}]},'В':{'cap':[{'x':0x10,'y':-0xa8},{'x':-0x1f,'y':-0x7d}],'low':[{'x':-0x18,'y':-0x27}]},'Г':{'cap':[{'x':0x18,'y':-0xa7},{'x':-0x1e,'y':-0x7a}],'low':[{'x':-0x1b,'y':-0x27}]},'Д':{'cap':[{'x':0x18,'y':-0xa8}],'low':[{'x':0xb,'y':-0x3e}]},'Е':{'cap':[{'x':0x34,'y':-0xad}],'low':[{'x':-0x1f,'y':-0x21}]},'Ж':{'cap':[{'x':-0x60,'y':-0x88},{'x':-0x26,'y':-0x55},{'x':0x76,'y':-0xaf}],'low':[{'x':-0x3f,'y':-0x2c},{'x':-0x14,'y':-0x25},{'x':0x2c,'y':-0x3e}]},'З':{'cap':[{'x':-0x1c,'y':-0xad}],'low':[{'x':-0x21,'y':-0x28}]},'И':{'cap':[{'x':-0x4d,'y':-0x80},{'x':0x40,'y':-0xc4}],'low':[{'x':-0x2b,'y':-0x29},{'x':0x12,'y':-0x4c}]},'Й':{'cap':[{'x':-0x4d,'y':-0x80},{'x':0x40,'y':-0xc4},{'x':-0x9,'y':-0xd2}],'low':[{'x':-0x2b,'y':-0x29},{'x':0x12,'y':-0x4c},{'x':-0xe,'y':-0x5b}]},'К':{'cap':[{'x':-0x49,'y':-0xb0},{'x':0x5c,'y':-0xbc}],'low':[{'x':-0x28,'y':-0x2b},{'x':-0x6,'y':-0x20}]},'Л':{'cap':[{'x':-0x49,'y':-0x34}],'low':[{'x':-0x27,'y':-0x26}]},'М':{'cap':[{'x':-0x68,'y':-0x30}],'low':[{'x':-0x29,'y':-0x22}]},'Н':{'cap':[{'x':-0x48,'y':-0xb4},{'x':-0xa,'y':-0x6d},{'x':0x4e,'y':-0xc7}],'low':[{'x':-0x2a,'y':-0x28},{'x':-0xe,'y':-0x2b},{'x':0x13,'y':-0x49}]},'О':{'cap':[{'x':0xa,'y':-0xc1}],'low':[{'x':0x8,'y':-0x4b}]},'П':{'cap':[{'x':-0x4,'y':-0xa0},{'x':0x41,'y':-0xa0},{'x':-0x36,'y':-0x7c}],'low':[{'x':-0x20,'y':-0x29},{'x':-0xb,'y':-0x2a}]},'Р':{'cap':[{'x':0x14,'y':-0xa8},{'x':0x2-0x17,'y':-0x6a}],'low':[{'x':-0x2a,'y':-0x2b},{'x':-0x16,'y':-0x27}]},'С':{'cap':[{'x':0x1c,'y':-0x8c}],'low':[{'x':0x9,'y':-0x3d}]},'Т':{'cap':[{'x':-0x16,'y':-0xa2},{'x':0x21,'y':-0xa0},{'x':0x58,'y':-0xa4},{'x':-0x46,'y':-0x7c}],'low':[{'x':-0x38,'y':-0x26},{'x':-0x1c,'y':-0x28},{'x':0xc,'y':-0x2a}]},'У':{'cap':[{'x':-0x3f,'y':-0x7a}],'low':[{'x':-0x2a,'y':-0x2c}]},'Ф':{'cap':[{'x':-0x2d,'y':-0xe4},{'x':0xd,'y':-0xbf}],'low':[{'x':0x18,'y':-0x9f},{'x':0xc,'y':-0x44}]},'Х':{'cap':[{'x':-0x3e,'y':-0x81},{'x':0x5b,'y':-0xac}],'low':[{'x':-0x2c,'y':-0x2c},{'x':0x18,'y':-0x3e}]},'Ц':{'cap':[{'x':-0x5a,'y':-0x7d}],'low':[{'x':-0x32,'y':-42.3}]},'Ч':{'cap':[{'x':-0x49,'y':-0x79}],'low':[{'x':-0x24,'y':-0x26}]},'Ш':{'cap':[{'x':-0x74,'y':-0x7d}],'low':[{'x':-0x3a,'y':-0x2b}]},'Щ':{'cap':[{'x':-0x77,'y':-0x80}],'low':[{'x':-0x38,'y':-0x2d}]},'Ъ':{'cap':[{'x':0x1-0x49,'y':-0xb4}],'low':[{'x':-0x24,'y':-0x2a}]},'Ь':{'cap':[{'x':-0x11,'y':-0xc6}],'low':[{'x':-0x18,'y':-0x2b}]},'Ю':{'cap':[{'x':-0x4e,'y':-0xac},{'x':-0x23,'y':-0x6c},{'x':0x40,'y':-0xb0}],'low':[{'x':-0x2b,'y':-0x3e},{'x':-0xf,'y':-0x27},{'x':0x1c,'y':-0x44}]},'Я':{'cap':[{'x':-0x4a,'y':-0x2e}],'low':[{'x':-0x24,'y':-0x1f}]}};function _0x57d8(_0x5c43bc,_0x294cb0){_0x5c43bc=_0x5c43bc-0xc4;const _0x3d8ff2=_0x3d8f();let _0x57d883=_0x3d8ff2[_0x5c43bc];return _0x57d883;}function initAlphabet(){const _0x7cc855=_0x2c4436,_0x377ea1=document[_0x7cc855(0xf3)](_0x7cc855(0xf2));_0x377ea1[_0x7cc855(0xc7)]='',alphabet[_0x7cc855(0x11b)](_0x31a431=>{const _0x9d8a7a=_0x7cc855,_0x145948=document[_0x9d8a7a(0x11c)](_0x9d8a7a(0xe4));_0x145948[_0x9d8a7a(0xc6)]=_0x9d8a7a(0xd0),_0x145948[_0x9d8a7a(0x10a)]=_0x31a431,_0x145948[_0x9d8a7a(0xdb)]=()=>selectLetter(_0x31a431),_0x377ea1[_0x9d8a7a(0xce)](_0x145948);});}function selectLetter(_0x49f7af){const _0x2c33ec=_0x2c4436;currentLetter=_0x49f7af,document['getElementById'](_0x2c33ec(0xfc))[_0x2c33ec(0x10a)]=_0x49f7af+_0x49f7af[_0x2c33ec(0xe5)](),document[_0x2c33ec(0xf3)](_0x2c33ec(0xe6))[_0x2c33ec(0xd4)][_0x2c33ec(0xeb)]=_0x2c33ec(0xf6),document[_0x2c33ec(0xf3)](_0x2c33ec(0x110))[_0x2c33ec(0xd4)][_0x2c33ec(0xeb)]=_0x2c33ec(0x10e),setTimeout(drawScene,0x64);}function showAlphabet(){const _0x4eaf31=_0x2c4436;document[_0x4eaf31(0xf3)]('app-screen')[_0x4eaf31(0xd4)][_0x4eaf31(0xeb)]=_0x4eaf31(0xf6),document[_0x4eaf31(0xf3)](_0x4eaf31(0xff))[_0x4eaf31(0xd4)]['display']=_0x4eaf31(0xf6),document['getElementById'](_0x4eaf31(0xe6))[_0x4eaf31(0xd4)]['display']=_0x4eaf31(0x10e);}function drawScene(){const _0x3e9b50=_0x2c4436;hasDrawn=![],currentPointIndex=0x0,canvas['width']=canvas[_0x3e9b50(0x11a)][_0x3e9b50(0xfe)],canvas[_0x3e9b50(0xdd)]=canvas[_0x3e9b50(0x11a)]['clientHeight'];const _0x4985c9=canvas[_0x3e9b50(0xf9)],_0x5aa040=canvas[_0x3e9b50(0xdd)],_0x25c1b0=_0x5aa040/0x2,_0x550a89=Math['min'](0x5a,_0x5aa040/4.5),_0x434040=_0x25c1b0+_0x550a89/0x2;ctx['clearRect'](0x0,0x0,_0x4985c9,_0x5aa040),ctx['strokeStyle']=_0x3e9b50(0x11d),ctx[_0x3e9b50(0x102)]=0x2,[_0x25c1b0-_0x550a89*1.5,_0x25c1b0-_0x550a89/0x2,_0x25c1b0+_0x550a89/0x2,_0x25c1b0+_0x550a89*1.5][_0x3e9b50(0x11b)](_0x38798a=>{const _0xd404b0=_0x3e9b50;ctx['beginPath'](),ctx['moveTo'](0x0,_0x38798a),ctx[_0xd404b0(0xfa)](_0x4985c9,_0x38798a),ctx[_0xd404b0(0x105)]();});const _0x49583e=(_0x3cbe07,_0x4ec8ce,_0xedd6d)=>{const _0x15f486=_0x3e9b50;ctx[_0x15f486(0xef)]=_0xedd6d+_0x15f486(0x104),ctx[_0x15f486(0x101)]=_0x15f486(0xf7),ctx['textAlign']='center',ctx[_0x15f486(0x109)]='alphabetic',ctx[_0x15f486(0x11f)](_0x3cbe07,_0x4ec8ce,_0x434040-0x3),ctx[_0x15f486(0xda)]=_0x15f486(0x114),ctx[_0x15f486(0x124)]([0x8,0x5]),ctx[_0x15f486(0xdc)](_0x3cbe07,_0x4ec8ce,_0x434040-0x3),ctx['setLineDash']([]);};_0x49583e(currentLetter,_0x4985c9/0x2-_0x550a89*1.2,_0x550a89*0x2),_0x49583e(currentLetter[_0x3e9b50(0xe5)](),_0x4985c9/0x2+_0x550a89*1.2,_0x550a89*1.5),renderPoints(),drawHiddenTarget(_0x4985c9,_0x5aa040,_0x550a89,_0x434040);}function renderPoints(){const _0x58bba2=_0x2c4436,_0x23960a=canvas[_0x58bba2(0xdd)],_0x170b8c=Math[_0x58bba2(0x123)](0x5a,_0x23960a/4.5),_0x2d5d5d=_0x23960a/0x2+_0x170b8c/0x2,_0x456456=letterConfig[currentLetter];if(!_0x456456)return;const _0xe6c2d=(_0x31872d,_0x326ba2,_0x241866)=>{_0x31872d?.['forEach']((_0x4eb591,_0x3a79e9)=>{const _0x4f8a1d=_0x57d8,_0x45e382=_0x3a79e9+_0x241866;ctx[_0x4f8a1d(0x101)]=_0x45e382<currentPointIndex?_0x4f8a1d(0xd8):_0x4f8a1d(0xd9),ctx[_0x4f8a1d(0xf1)](),ctx['arc'](_0x326ba2+_0x4eb591['x'],_0x2d5d5d+_0x4eb591['y'],0xc,0x0,Math['PI']*0x2),ctx[_0x4f8a1d(0x112)](),ctx[_0x4f8a1d(0x101)]=_0x4f8a1d(0xee),ctx['font']='bold\x2012px\x20Arial',ctx[_0x4f8a1d(0xcd)]=_0x4f8a1d(0xc8),ctx['textBaseline']=_0x4f8a1d(0xe8),ctx[_0x4f8a1d(0x11f)](_0x3a79e9+0x1,_0x326ba2+_0x4eb591['x'],_0x2d5d5d+_0x4eb591['y']);});},_0x38fe87=letterConfig[currentLetter][_0x58bba2(0x106)]?letterConfig[currentLetter]['cap'][_0x58bba2(0x10d)]:0x0;_0xe6c2d(_0x456456[_0x58bba2(0x106)],canvas[_0x58bba2(0xf9)]/0x2-_0x170b8c*1.2,0x0),_0xe6c2d(_0x456456[_0x58bba2(0x10f)],canvas[_0x58bba2(0xf9)]/0x2+_0x170b8c*1.2,_0x38fe87);}function drawHiddenTarget(_0x464b10,_0x5518c3,_0x165350,_0x3c6dd0){const _0x28a679=_0x2c4436;hCan['width']=_0x464b10,hCan[_0x28a679(0xdd)]=_0x5518c3,hCtx[_0x28a679(0x10c)](0x0,0x0,_0x464b10,_0x5518c3),hCtx['textAlign']=_0x28a679(0xc8),hCtx['textBaseline']=_0x28a679(0x119),hCtx[_0x28a679(0x102)]=0x23,hCtx[_0x28a679(0xda)]=_0x28a679(0xe7),hCtx[_0x28a679(0x125)]=_0x28a679(0x120),hCtx['lineJoin']=_0x28a679(0x120),hCtx[_0x28a679(0xef)]=_0x165350*0x2+_0x28a679(0x104),hCtx[_0x28a679(0xdc)](currentLetter,_0x464b10/0x2-_0x165350*1.2,_0x3c6dd0-0x3),hCtx[_0x28a679(0xef)]=_0x165350*1.5+_0x28a679(0x104),hCtx[_0x28a679(0xdc)](currentLetter[_0x28a679(0xe5)](),_0x464b10/0x2+_0x165350*1.2,_0x3c6dd0-0x3);}const getPos=_0x47dc9b=>{const _0x5290cb=_0x2c4436,_0x27fe64=canvas[_0x5290cb(0xcc)]();return{'x':_0x47dc9b['clientX']-_0x27fe64[_0x5290cb(0xd7)],'y':_0x47dc9b['clientY']-_0x27fe64[_0x5290cb(0x115)]};},startDraw=_0x4cbb07=>{const _0x5c8f68=_0x2c4436;_0x4cbb07[_0x5c8f68(0x100)]();const _0x3bb655=getPos(_0x4cbb07),_0x13cbe1=canvas['height'],_0x1367a5=Math[_0x5c8f68(0x123)](0x5a,_0x13cbe1/4.5),_0x1aacb6=_0x13cbe1/0x2+_0x1367a5/0x2,_0x3b46f3=letterConfig[currentLetter];if(_0x3b46f3){const _0x1d60e9=[...(_0x3b46f3[_0x5c8f68(0x106)]||[])[_0x5c8f68(0x10b)](_0x4f0f93=>({'x':_0x4f0f93['x']+canvas['width']/0x2-_0x1367a5*1.2,'y':_0x4f0f93['y']+_0x1aacb6})),...(_0x3b46f3['low']||[])[_0x5c8f68(0x10b)](_0xf9070d=>({'x':_0xf9070d['x']+canvas[_0x5c8f68(0xf9)]/0x2+_0x1367a5*1.2,'y':_0xf9070d['y']+_0x1aacb6}))],_0x28242c=_0x1d60e9[currentPointIndex];if(_0x28242c){if(Math[_0x5c8f68(0xf8)](_0x3bb655['x']-_0x28242c['x'],_0x3bb655['y']-_0x28242c['y'])<0x2d){isDrawing=!![],hasDrawn=!![],currentPointIndex++,renderPoints();canvas[_0x5c8f68(0x116)]&&_0x4cbb07[_0x5c8f68(0x103)]&&canvas[_0x5c8f68(0x116)](_0x4cbb07[_0x5c8f68(0x103)]);ctx[_0x5c8f68(0xf1)](),ctx[_0x5c8f68(0xde)](_0x3bb655['x'],_0x3bb655['y']);return;}}showToast(_0x5c8f68(0x118)+(currentPointIndex+0x1)+'!\x20✨'),isDrawing=![];}else isDrawing=!![],canvas['setPointerCapture']&&_0x4cbb07[_0x5c8f68(0x103)]&&canvas[_0x5c8f68(0x116)](_0x4cbb07[_0x5c8f68(0x103)]),ctx[_0x5c8f68(0xf1)](),ctx[_0x5c8f68(0xde)](_0x3bb655['x'],_0x3bb655['y']);},moveDraw=_0x27a1de=>{const _0x2e8773=_0x2c4436;if(!isDrawing)return;_0x27a1de[_0x2e8773(0x100)]();const _0xe311a4=getPos(_0x27a1de);ctx[_0x2e8773(0xfa)](_0xe311a4['x'],_0xe311a4['y']),ctx[_0x2e8773(0xda)]=_0x2e8773(0x113),ctx[_0x2e8773(0x102)]=0xa,ctx[_0x2e8773(0x125)]=_0x2e8773(0x120),ctx[_0x2e8773(0xd6)]=_0x2e8773(0x120),ctx['stroke']();},endDraw=_0x53e352=>{const _0x279bbe=_0x2c4436;if(!isDrawing)return;isDrawing=![];if(canvas[_0x279bbe(0xe1)]&&_0x53e352[_0x279bbe(0x103)])try{canvas['releasePointerCapture'](_0x53e352[_0x279bbe(0x103)]);}catch(_0xd6eece){}};function checkScore(){const _0x1ba4b0=_0x2c4436;if(hCan[_0x1ba4b0(0xf9)]!==canvas[_0x1ba4b0(0xf9)]||hCan[_0x1ba4b0(0xdd)]!==canvas[_0x1ba4b0(0xdd)]){const _0x2d1cd1=canvas['height'],_0x1f5ac5=Math[_0x1ba4b0(0x123)](0x5a,_0x2d1cd1/4.5),_0xe13a07=_0x2d1cd1/0x2+_0x1f5ac5/0x2;drawHiddenTarget(canvas[_0x1ba4b0(0xf9)],canvas['height'],_0x1f5ac5,_0xe13a07);}const _0x5539e6=ctx['getImageData'](0x0,0x0,canvas[_0x1ba4b0(0xf9)],canvas[_0x1ba4b0(0xdd)])[_0x1ba4b0(0xcf)],_0x149e8b=hCtx[_0x1ba4b0(0xed)](0x0,0x0,hCan[_0x1ba4b0(0xf9)],hCan[_0x1ba4b0(0xdd)])[_0x1ba4b0(0xcf)];let _0x5a1fb7=0x0,_0xcf3596=0x0;for(let _0x3d7c4e=0x0;_0x3d7c4e<_0x5539e6[_0x1ba4b0(0x10d)];_0x3d7c4e+=0x4){const _0x580984=_0x149e8b[_0x3d7c4e+0x3]>0x1e,_0x5dd05a=_0x5539e6[_0x3d7c4e+0x3]>0x1e;_0x580984&&(_0x5a1fb7++,_0x5dd05a&&_0xcf3596++);}if(_0x5a1fb7===0x0){document[_0x1ba4b0(0xf3)](_0x1ba4b0(0xca))[_0x1ba4b0(0x10a)]='0%',document[_0x1ba4b0(0xf3)](_0x1ba4b0(0xca))[_0x1ba4b0(0xd4)][_0x1ba4b0(0xfd)]=_0x1ba4b0(0xe0),document[_0x1ba4b0(0xf3)](_0x1ba4b0(0xff))[_0x1ba4b0(0xd4)][_0x1ba4b0(0xeb)]='flex';return;}let _0x130579=_0xcf3596/_0x5a1fb7,_0x2bf60d=Math[_0x1ba4b0(0x120)](_0x130579*0x6e+0x19);if(_0x130579>0.25)_0x2bf60d=Math[_0x1ba4b0(0xf5)](_0x2bf60d,Math[_0x1ba4b0(0x123)](0x64,Math[_0x1ba4b0(0x120)](0x4b+_0x130579*0x23)));else _0x130579>0.05?_0x2bf60d=Math[_0x1ba4b0(0xf5)](_0x2bf60d,0x41):_0x2bf60d=0x28;_0x2bf60d=Math['max'](0x28,Math[_0x1ba4b0(0x123)](0x64,_0x2bf60d));let _0x246210=_0x1ba4b0(0xea);if(_0x2bf60d<0x4b)_0x246210=_0x1ba4b0(0xe9);document[_0x1ba4b0(0xf3)]('score-display')[_0x1ba4b0(0x10a)]=_0x2bf60d+'%',document[_0x1ba4b0(0xf3)](_0x1ba4b0(0xff))[_0x1ba4b0(0xcb)]('h2')[_0x1ba4b0(0x10a)]=_0x246210,document[_0x1ba4b0(0xf3)](_0x1ba4b0(0xca))[_0x1ba4b0(0xd4)][_0x1ba4b0(0xfd)]=_0x2bf60d>=0x4b?_0x1ba4b0(0x117):_0x1ba4b0(0x108),document[_0x1ba4b0(0xf3)](_0x1ba4b0(0xff))[_0x1ba4b0(0xd4)]['display']='flex';}function retryLetter(){const _0x124939=_0x2c4436;document[_0x124939(0xf3)](_0x124939(0xff))[_0x124939(0xd4)][_0x124939(0xeb)]=_0x124939(0xf6),drawScene();}canvas[_0x2c4436(0xd5)](_0x2c4436(0xec),startDraw),canvas[_0x2c4436(0xd5)](_0x2c4436(0xd3),moveDraw),canvas['addEventListener'](_0x2c4436(0xc5),endDraw),canvas[_0x2c4436(0xd5)](_0x2c4436(0xc9),endDraw),window['onload']=initAlphabet;
 </script>
 </body>
 </html>
